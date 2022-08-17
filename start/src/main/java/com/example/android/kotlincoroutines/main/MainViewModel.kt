@@ -21,6 +21,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.android.kotlincoroutines.util.singleArgViewModelFactory
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -124,11 +125,11 @@ class MainViewModel(private val repository: TitleRepository) : ViewModel() {
     /**
      * Refresh the title, showing a loading spinner while it refreshes and errors via snackbar.
      */
-     fun refreshTitle() {
-        viewModelScope.launch {
+    private fun launchDataLoad(block: suspend () -> Unit): Job {
+        return viewModelScope.launch {
             try {
                 _spinner.value = true
-                repository.refreshTitle()
+                block()
             } catch (error: TitleRefreshError) {
                 _snackBar.value = error.message
             } finally {
@@ -136,4 +137,9 @@ class MainViewModel(private val repository: TitleRepository) : ViewModel() {
             }
         }
     }
+     fun refreshTitle() {
+         launchDataLoad {
+             repository.refreshTitle()
+         }
+     }
 }
