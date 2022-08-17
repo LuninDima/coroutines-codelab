@@ -22,7 +22,7 @@ import com.example.android.kotlincoroutines.util.BACKGROUND
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
+import kotlinx.coroutines.withTimeout
 import java.util.concurrent.ExecutorService
 
 /**
@@ -55,27 +55,15 @@ class TitleRepository(val network: MainNetwork, val titleDao: TitleDao) {
      * This method does not return the new title. Use [TitleRepository.title] to observe
      * the current tile.
      */
-    suspend fun refreshTitleWithCallbacks(titleRefreshCallback: TitleRefreshCallback) {
-        // This request will be run on a background thread by retrofit
-        withContext(Dispatchers.IO){
-           val result = try{
-               network.fetchNextTitle().execute()
-           } catch (cause: Throwable){
-               throw  TitleRefreshError("Unable to refresh title", cause)
-           }
-            if(result.isSuccessful){
-                titleDao.insertTitle(Title(result.body()!!))
-            } else {
-                throw  TitleRefreshError("Unable to refresh title", null)
-            }
-        }
-
-    }
 
     suspend fun refreshTitle() {
-
-        // TODO: Refresh from network and write to database
-        delay(500)
+        try {
+            val result = withTimeout(5_000)
+            { network.fetchNextTitle() }
+            titleDao.insertTitle(Title(result))
+        } catch (cause: Throwable){
+            throw TitleRefreshError("Unable to refresh title", cause)
+        }
     }
 }
 
