@@ -41,6 +41,6 @@ class RefreshMainDataWorkTest {
         // Start the work synchronously
         val result = worker.startWork().get()
 
-        assertThat(result).isEqualTo(Result.success())
+       assertThat(result).isEqualTo(Result.success())
     }
 }
